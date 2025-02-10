@@ -236,7 +236,122 @@ class Elicit:
         - Initializes the ElicitApi object with the defined credentials and configuration.
         - Logs in to the ElicitApi and creates a client object for further API interactions.
     """
+    def __init__(self, configuration):
+        pp.pprint(configuration)
+        # TODO: should warn if any of these other credential parameters are None
+        if configuration.username is not None:
+            self.creds = api.ElicitCreds(configuration.username, configuration.password, configuration.client_id, configuration.client_secret)
+        else:
+            cred_env_config = load_yaml_from_env(configuration.env)
+            self.creds = api.ElicitCreds.from_env(cred_env_config)
 
+        self.script_args = configuration
+        self.elicit_api = api.ElicitApi(self.creds, self.script_args.apiurl, self.script_args.send_opt)
+        self.client = self.elicit_api.login()
+
+    def api_url(self):
+        return self.script_args.apiurl
+
+    def auth_header(self):
+        return self.elicit_api.auth_header
+
+    def add_obj(self, op, args):
+        return add_object(self.client, self.elicit_api, op, self.pp(), **args)
+
+    def get_all_users(self, args = dict()):
+        resp = self.client.request(self.elicit_api['findUsers'](**args))
+        assert resp.status == HTTPStatus.OK
+        return resp.data
+
+    def find_or_create_user(self, username, password, email=None, role=None):
+        user = find_or_create_user(self.client, self.elicit_api, username, password, email, role)
+        return user
+
+    def ensure_users(self, num_registered, num_anonymous):
+        page = 0
+        next_link = 'first'
+        study_participants = []
+        while ((num_registered > 0) or (num_anonymous > 0)) and next_link:
+            page += 1
+            print("GETTING page %d next %s"%(page, next_link))
+            resp = self.client.request(self.elicit_api['findUsers'](page=page, page_size=3))
+            assert resp.status == HTTPStatus.OK
+            users = resp.data
+
+            print("got %d users"%len(users))
+
+            link_header = resp.header['Link']
+
+            last_page_link, next_page_link = parse_pagination_links(link_header)
+
+            if len(last_page_link) == 1:
+                last_page = re.search(r'.*page=(\d+).*', last_page_link[0]['href']).group(1)
+                print("last_page %s"%last_page)
+
+            if len(next_page_link) == 1:
+                next_link = next_page_link[0]['href']
+            else:
+                next_link = ''
+
+            for user in users:
+                if user.role == 'registered_user':
+                    if num_registered > 0:
+                        study_participants += [user]
+                        num_registered -= 1
+                elif user.role == 'anonymous_user':
+                    if (num_anonymous > 0) and not "mturk" in user.email:
+                        study_participants += [user]
+                        num_anonymous -= 1
+            print("Got existing %d users.  %d registered and %d anonymous users remain."%(len(study_participants), num_registered, num_anonymous))
+
+        if (num_registered > 0) or (num_anonymous > 0):
+            print('Creating remaining users')
+
+        for i in range(num_anonymous):
+            username = ''.join([random.choice(string.ascii_letters + string.digits) for n in range(16)])
+            role = 'anonymous_user'
+            password = 'password'
+            user_details = dict(username=username,
+                                password=password,
+                                email=username + "@elicit.com",
+                                role=role or 'registered_user',
+                                anonymous=True,
+                                password_confirmation=password)
+            new_user = self.add_user(user=dict(user=user_details))
+            study_participants += [new_user]
+
+        for i in range(num_registered):
+            username = ''.join([random.choice(string.ascii_letters + string.digits) for n in range(16)])
+            role = 'registered_user'
+            password = 'password'
+            user_details = dict(username=username,
+                                password=password,
+                                email=username + "@elicit.com",
+                                role=role or 'registered_user',
+                                anonymous=False,
+                                password_confirmation=password)
+            new_user = self.add_user(user=dict(user=user_details))
+            study_participants += [new_user]
+
+        return study_participants
+
+    def add_users_to_protocol(self, new_study, new_protocol, study_participants):
+        add_users_to_protocol(self.client, self.elicit_api, new_study, new_protocol, study_participants)
+
+    def assert_admin(self):
+        return assert_role(self.client, self.elicit_api, 'admin')
+
+    def assert_investigator(self):
+        return assert_role(self.client, self.elicit_api, 'investigator')
+
+    def assert_creator(self):
+        return assert_role(self.client, self.elicit_api, ['admin', 'investigator'])
+
+    def pp(self):
+        if self.script_args.debug:
+            return _pp
+        else:
+            return None
 
 def add_find_api_fn(api_name):
     fn_name = camel_to_snake(api_name)

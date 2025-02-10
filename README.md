@@ -1,5 +1,14 @@
 # pyelicit
 
+## Installation
+
+(Assuming `uv`, update as appropriate for your package manager)
+
+
+```
+uv pip install git+https://github.com/elicit-experiment/pyelicit/#subdirectory=pyelicit
+```
+
 ## Secrets Configuration
 
 Secrets can be configured explicitly via arguments to the `Elicit` constructor, or implicitly via yaml files.
