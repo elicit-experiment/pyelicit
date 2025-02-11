@@ -61,9 +61,9 @@ class ElicitApi:
                 file.write(response.content)
 
             # Creating an url string pointing to the local file swagger.json
-            swagger_json_url = f"file://{swagger_json_local_path}"
+            swagger_json_url = Path(swagger_json_local_path).as_uri()
 
-            print(f"Connecting to Elicit API Swagger definition {self.swagger_url}")
+            print(f"Connecting to Elicit API Swagger definition #{swagger_json_url} downloaded from {self.swagger_url}")
             self.app = App.create(swagger_json_url)  # now valid on all OS
             print(f"Loaded API definition {self.swagger_url}")
             self.auth = Security(self.app)
