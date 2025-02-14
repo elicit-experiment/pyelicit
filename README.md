@@ -26,11 +26,16 @@ To run the test suite:
 python -m pytest tests/
 ```
 
-## Secrets Configuration
+## Configuration
 
-Secrets can be configured explicitly via arguments to the `Elicit` constructor, or implicitly via yaml files.
+Secrets and other settings can be configured explicitly via arguments to the `Elicit` constructor, or implicitly via yaml files.
 
-The `env` configuration field controls which credential file is loaded. By default, this is `prod`. 
+The `env` configuration parameter controls the base name of the credential file to be loaded. By default, this is `prod`. The package will then load the configuration file `<env>.yaml`. This file may be placed in several places; the search order is as follows:
+1. The current working directory when the `Elicit` object is created
+2. The directory in which the script creating the elicit object is located
+3. The home directory folder `~/.config/elicit/`
+
+Alternatively, the `env_file` parameter lets one specify the file directly.
 
 These files have the following format:
 
@@ -52,4 +57,5 @@ password: <user password>
 
 ```bash
 uv pip install -e ".[test]"
+python -m pytest tests/
 ```
