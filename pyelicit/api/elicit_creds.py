@@ -27,11 +27,17 @@ class ElicitCreds:
         self.public_client_id = _public_client_id
         self.public_client_secret = _public_client_secret
 
+    def __str__(self):
+        return pprint.pformat(vars(self))
+
+    def __repr__(self):
+        return self.__str__()
+
     @classmethod
     def from_env(cls, config):
         # Return None unless all required fields are specified
-        required_fields = ['user', 'password', 'client_id', 'client_secret']
-        if not all(field in config and config[field] for field in required_fields):
+        required_fields = ['username', 'password', 'client_id', 'client_secret']
+        if not all((field in config) and (config[field] is not None) for field in required_fields):
             return None
 
-        return cls(config['user'], config['password'], config['client_id'], config['client_secret'])
+        return cls(config['username'], config['password'], config['client_id'], config['client_secret'])

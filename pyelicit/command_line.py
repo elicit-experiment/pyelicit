@@ -34,12 +34,15 @@ def get_parser():
 def parse_command_line_args():
     args = parser.parse_args()
 
-    if args.apiurl is None:
-        args.apiurl = ENVIRONMENTS[args.env]
+    return add_command_line_args_default(args)
 
-    if args.apiurl.startswith('http://'):
-        args.ignore_https = True
+def add_command_line_args_default(initial_args):
+    if initial_args.api_url is None:
+        initial_args.api_url = ENVIRONMENTS[initial_args.env]
 
-    args.send_opt = dict(verify=(not args.ignore_https))
+    if initial_args.api_url.startswith('http://'):
+        initial_args.ignore_https = True
 
-    return args
+    initial_args.send_opt = dict(verify=(not initial_args.ignore_https))
+
+    return initial_args

@@ -1,14 +1,19 @@
 import pytest
-from pyelicit.elicit import Elicit
+
+from pyelicit.elicit import Elicit, config_search_paths
 from unittest.mock import MagicMock, patch
 from types import SimpleNamespace
+from pprint import pprint
+from pyelicit.command_line import add_command_line_args_default, get_parser
+import os
+from pathlib import Path
 
 def test_elicit_constructor_with_direct_config():
     """Test Elicit constructor with directly provided configuration"""
     config = SimpleNamespace(
         env_file=None,
-        env='prod',
-        apiurl='https://test.com',
+        env=None,
+        api_url='https://test.com',
         username='test_user',
         password='test_pass',
         client_id='test_client',
@@ -27,10 +32,10 @@ def test_elicit_constructor_with_direct_config():
         elicit = Elicit(config)
         
         # Verify credentials were created correctly
-        assert elicit.creds.username == 'test_user'
+        assert elicit.creds.user == 'test_user'
         assert elicit.creds.password == 'test_pass'
-        assert elicit.creds.client_id == 'test_client'
-        assert elicit.creds.client_secret == 'test_secret'
+        assert elicit.creds.public_client_id == 'test_client'
+        assert elicit.creds.public_client_secret == 'test_secret'
         
         # Verify API was initialized correctly
         mock_api.assert_called_once()
@@ -41,7 +46,7 @@ def test_elicit_constructor_missing_credentials():
     config = SimpleNamespace(
         env_file=None,
         env='prod',
-        apiurl='https://test.com',
+        api_url='https://test.com',
         username=None,
         password=None,
         client_id=None,
@@ -58,17 +63,13 @@ def test_elicit_constructor_missing_credentials():
 
 def test_elicit_constructor_with_env_file():
     """Test Elicit constructor loading configuration from environment file"""
-    config = SimpleNamespace(
-        env_file='test_env.yaml',
-        env='prod',
-        apiurl='https://test.com',
-        username=None,
-        password=None,
-        client_id=None,
-        client_secret=None,
-        send_opt={'verify': True},
-        debug=False
-    )
+    config = {
+        'env_file': 'test_env.yaml',
+        'env': 'prod',
+        'api_url': 'https://test.com',
+        'username': 'config_user',
+        'client_id': 'config_client',
+    }
     
     mock_file_config = {
         'username': 'file_user',
@@ -84,10 +85,24 @@ def test_elicit_constructor_with_env_file():
             mock_api_instance = MagicMock()
             mock_api_instance.login.return_value = MagicMock()
             mock_api.return_value = mock_api_instance
-            
-            elicit = Elicit(config)
-            
-            assert elicit.creds.username == 'file_user'
-            assert elicit.creds.password == 'file_pass'
-            assert elicit.creds.client_id == 'file_client'
-            assert elicit.creds.client_secret == 'file_secret'
+
+            args = []
+            for k, v in config.items():
+                args.append(f'--{k}')
+                args.append(v)
+
+            parsed_args = add_command_line_args_default(get_parser().parse_args(args))
+            pprint(parsed_args)
+            elicit = Elicit(parsed_args)
+
+        assert elicit.creds.user == 'config_user'
+        assert elicit.creds.password == 'file_pass'
+        assert elicit.creds.public_client_id == 'config_client'
+        assert elicit.creds.public_client_secret == 'file_secret'
+
+def test_config_search_paths():
+    search_paths = config_search_paths()
+    assert len(search_paths) == 3
+    assert search_paths[0] == '.'
+    assert search_paths[1].endswith("pytest")
+    assert search_paths[2] == str(Path.home() / ".config/elicit")

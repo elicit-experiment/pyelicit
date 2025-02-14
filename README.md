@@ -47,3 +47,9 @@ password: <user password>
 
 `user` and `password` are the user name/password for the identity to be used to make the API calls. 
 
+
+## Tests
+
+```bash
+uv pip install -e ".[test]"
+```
