@@ -267,7 +267,7 @@ class Elicit:
             - ignore_https (bool): Whether to bypass HTTPS verification (default: False).
             - debug (bool): Whether to enable debug mode (default: False).
             - role (str): Role of the user (default: 'admin').
-            - username (str, optional): Username for authentication.
+            - user (str, optional): user for authentication.
             - password (str, optional): Password for authentication.
             - client_id (str, optional): Client ID for authentication.
             - client_secret (str, optional): Client secret for authentication.
@@ -278,7 +278,7 @@ class Elicit:
         yaml.YAMLError: If the environment YAML file contains invalid YAML.
 
     Behavior:
-        - If a username is provided, it assumes all the credentials (username, password, client_id, and client_secret) are specified.
+        - If a user is provided, it assumes all the credentials (user, password, client_id, and client_secret) are specified.
         - Otherwise, it loads credentials from an environment-specific YAML file (e.g. `prod.yaml`) located in the same directory as this script.
         - Initializes the ElicitApi object with the defined credentials and configuration.
         - Logs in to the ElicitApi and creates a client object for further API interactions.

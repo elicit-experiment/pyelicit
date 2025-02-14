@@ -23,9 +23,9 @@ parser.add_argument('--ignore_https', action='store_true', default=False)
 parser.add_argument('--debug', action='store_true', default=False)
 
 parser.add_argument('--role', type=str, default='admin')
-parser.add_argument('--username', type=str, default=None)
+parser.add_argument('--user', type=str, default=None)
 parser.add_argument('--password', type=str, default=None)
-parser.add_argument('--client_id', type=str, default='')
+parser.add_argument('--client_id', type=str, default=None)
 parser.add_argument('--client_secret', type=str, default=None)
 
 def get_parser():

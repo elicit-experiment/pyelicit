@@ -14,7 +14,7 @@ def test_elicit_constructor_with_direct_config():
         env_file=None,
         env=None,
         api_url='https://test.com',
-        username='test_user',
+        user='test_user',
         password='test_pass',
         client_id='test_client',
         client_secret='test_secret',
@@ -47,7 +47,7 @@ def test_elicit_constructor_missing_credentials():
         env_file=None,
         env='prod',
         api_url='https://test.com',
-        username=None,
+        user=None,
         password=None,
         client_id=None,
         client_secret=None,
@@ -67,12 +67,12 @@ def test_elicit_constructor_with_env_file():
         'env_file': 'test_env.yaml',
         'env': 'prod',
         'api_url': 'https://test.com',
-        'username': 'config_user',
+        'user': 'config_user',
         'client_id': 'config_client',
     }
     
     mock_file_config = {
-        'username': 'file_user',
+        'user': 'file_user',
         'password': 'file_pass',
         'client_id': 'file_client',
         'client_secret': 'file_secret'
