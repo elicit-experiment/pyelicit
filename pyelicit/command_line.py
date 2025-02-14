@@ -16,7 +16,9 @@ ENVIRONMENTS = {
 parser = argparse.ArgumentParser(prog='elicit')
 parser.add_argument('--env', choices=ENVIRONMENTS.keys(), default='prod',
                     help='Service environment to communicate with')
-parser.add_argument('--apiurl', type=str, default=None)
+parser.add_argument('--env_file',
+                    help='Environment file to load')
+parser.add_argument('--api_url', type=str, default=None)
 parser.add_argument('--ignore_https', action='store_true', default=False)
 parser.add_argument('--debug', action='store_true', default=False)
 
@@ -32,12 +34,15 @@ def get_parser():
 def parse_command_line_args():
     args = parser.parse_args()
 
-    if args.apiurl is None:
-        args.apiurl = ENVIRONMENTS[args.env]
+    return add_command_line_args_default(args)
 
-    if args.apiurl.startswith('http://'):
-        args.ignore_https = True
+def add_command_line_args_default(initial_args):
+    if initial_args.api_url is None:
+        initial_args.api_url = ENVIRONMENTS[initial_args.env]
 
-    args.send_opt = dict(verify=(not args.ignore_https))
+    if initial_args.api_url.startswith('http://'):
+        initial_args.ignore_https = True
 
-    return args
+    initial_args.send_opt = dict(verify=(not initial_args.ignore_https))
+
+    return initial_args
