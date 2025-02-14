@@ -49,14 +49,15 @@ class ElicitApi:
         self.api_url = api_url
         with user_agent_context('Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:132.0) Gecko/20100101 Firefox/132.0'):
             self.swagger_url = self.api_url + '/apidocs/v1/swagger.json'
-            print(self.swagger_url)
 
         try:
             # Load self.swagger_url json file to local filesystem
+            print(f"Downloading swagger definition from {self.swagger_url}")
             response = requests.get(self.swagger_url)
             swagger_json_local_path = os.path.abspath('swagger.json')
             with open(swagger_json_local_path, 'wb') as file:
                 file.write(response.content)
+                print(f"Saved swagger.json to {swagger_json_local_path}")
 
             # Creating an url string pointing to the local file swagger.json
             swagger_json_url = Path(swagger_json_local_path).as_uri()
