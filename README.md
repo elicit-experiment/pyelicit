@@ -4,9 +4,26 @@
 
 (Assuming `uv`, update as appropriate for your package manager)
 
-
 ```
 uv pip install git+https://github.com/elicit-experiment/pyelicit/#subdirectory=pyelicit
+```
+
+## Development Setup
+
+For development, clone the repository and install in editable mode with test dependencies:
+
+```bash
+git clone https://github.com/elicit-experiment/pyelicit.git
+cd pyelicit
+python -m pip install -e .
+```
+
+## Running Tests
+
+To run the test suite:
+
+```bash
+python -m pytest tests/
 ```
 
 ## Secrets Configuration
