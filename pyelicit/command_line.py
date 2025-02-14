@@ -31,12 +31,15 @@ parser.add_argument('--client_secret', type=str, default=None)
 def get_parser():
     return parser
 
-def parse_command_line_args():
+def parse_command_line_args(custom_defaults=None):
     args = parser.parse_args()
 
-    return add_command_line_args_default(args)
+    return add_command_line_args_default(args, custom_defaults)
 
-def add_command_line_args_default(initial_args):
+def add_command_line_args_default(initial_args, custom_defaults=None):
+    if custom_defaults is None:
+        custom_defaults = {}
+
     if initial_args.api_url is None:
         initial_args.api_url = ENVIRONMENTS[initial_args.env]
 
@@ -45,4 +48,4 @@ def add_command_line_args_default(initial_args):
 
     initial_args.send_opt = dict(verify=(not initial_args.ignore_https))
 
-    return initial_args
+    return vars(initial_args) | custom_defaults

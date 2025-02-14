@@ -106,3 +106,41 @@ def test_config_search_paths():
     assert search_paths[0] == '.'
     assert search_paths[1].endswith("pytest")
     assert search_paths[2] == str(Path.home() / ".config/elicit")
+
+def test_add_custom_command_line_defaults():
+    config = {
+        'env_file': 'test_env.yaml',
+        'env': 'prod',
+        'api_url': 'https://test.com',
+        'user': 'config_user',
+        'client_id': 'config_client',
+    }
+
+    mock_file_config = {
+        'user': 'file_user',
+        'password': 'file_pass',
+        'client_id': 'file_client',
+        'client_secret': 'file_secret'
+    }
+
+    with patch('pyelicit.elicit.load_yaml_from_env_file') as mock_load:
+        mock_load.return_value = mock_file_config
+
+        with patch('pyelicit.elicit.api.ElicitApi') as mock_api:
+            mock_api_instance = MagicMock()
+            mock_api_instance.login.return_value = MagicMock()
+            mock_api.return_value = mock_api_instance
+
+            args = []
+            for k, v in config.items():
+                args.append(f'--{k}')
+                args.append(v)
+
+            parsed_args = add_command_line_args_default(get_parser().parse_args(args), {'client_id': 'custom_client_id'})
+            pprint(parsed_args)
+            elicit = Elicit(parsed_args)
+
+        assert elicit.creds.user == 'config_user'
+        assert elicit.creds.password == 'file_pass'
+        assert elicit.creds.public_client_id == 'custom_client_id'
+        assert elicit.creds.public_client_secret == 'file_secret'
