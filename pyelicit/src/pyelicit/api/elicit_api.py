@@ -41,7 +41,6 @@ class ElicitApi:
         print("Initialize Elicit client library for {} {}".format(creds.user, creds.password))
         print("Initialize Elicit client library for {} {}".format(creds.public_client_id, creds.public_client_secret))
         print("Request options: {}\n".format(send_opt))
-        #print(send_opt)
 
         if (not send_opt['verify']) and api_url.startswith("https"):
             print('WARNING: not checking SSL')
@@ -51,7 +50,6 @@ class ElicitApi:
         with user_agent_context('Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:132.0) Gecko/20100101 Firefox/132.0'):
             self.swagger_url = self.api_url + '/apidocs/v1/swagger.json'
             print(self.swagger_url)
-            #self.swagger_url = 'https://elicit-experiment.com/apidocs/v1/swagger.json'
 
         try:
             # Load self.swagger_url json file to local filesystem
@@ -77,9 +75,7 @@ class ElicitApi:
 
             if self.app.root.host != self.api_host:
                 print('WARNING: API URL from swagger doesn\'t match this configuration: [%s] vs [%s]'%(self.api_url, self.app.root.host))
-            #self.app.root.host = 'elicit-experiment.com'
             print(self.app.root.schemes)
-            #setattr(self.app, 'schemes', ['http', 'https'])
 
         except urllib.error.HTTPError as e:
             # If the server returns an HTTP error (like 403 Forbidden), it will be

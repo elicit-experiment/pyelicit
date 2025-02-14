@@ -6,6 +6,9 @@ import json
 import random
 import string
 import yaml
+import os
+from pathlib import Path
+import inspect
 
 _pp = pp = pprint.PrettyPrinter(indent=4)
 
@@ -109,14 +112,14 @@ def add_object(client, elicit, operation, pp = _pp, **args):
     resp = client.request(elicit[operation](**args))
     assert resp.status == HTTPStatus.CREATED
     if resp.status != HTTPStatus.CREATED:
-        return (None)
+        return None
 
     created_object = resp.data
-    if pp != None:
+    if pp is not None:
         pp.print("\n\nCreated new object with %s:\n" % operation)
         pp.pprint(created_object)
 
-    return (created_object)
+    return created_object
 
 
 def find_objects(client, elicit, operation, pp = _pp, **args):
@@ -190,10 +193,28 @@ def load_trial_definitions(file_name):
         exec(td, globals(), _locals)
         return _locals['trial_components']
 
+
 def load_yaml_from_env(env):
     # Construct the filename dynamically based on env
     yaml_file = f"{env}.yaml"
+    search_paths = [
+        ".",  # Current directory
+        get_current_script_dir(),  # Directory of the executing script
+        str(Path.home() / ".config/elicit")  # '.config/elicit' subdirectory of the user's home
+    ]
 
+    for path in search_paths:
+        if path is None:
+            continue
+        file_path = os.path.join(path, yaml_file)
+        if os.path.isfile(file_path):
+            return load_yaml_from_env_file(file_path)
+
+    print(f"Error: File '{yaml_file}' not found in any of the search paths. Search paths: {search_paths}")
+    return None
+
+
+def load_yaml_from_env_file(yaml_file):
     # Load and parse the YAML file
     try:
         with open(yaml_file, 'r') as file:
@@ -206,6 +227,29 @@ def load_yaml_from_env(env):
         print(f"Error parsing YAML file '{yaml_file}': {e}")
         return None
 
+def get_current_script_dir():
+    """Gets the directory of the currently executing script.
+
+    Returns:
+        pathlib.Path or None: The directory as a pathlib.Path object, or None
+                             if it cannot be determined (e.g., in an interactive
+                             interpreter).
+    """
+    try:
+        # Get the frame of the caller (the function that called this one)
+        frame = inspect.currentframe().f_back
+
+        # Extract the filename from the frame's code object
+        filename = frame.f_code.co_filename
+
+        if not filename: # Handle cases where filename is empty (e.g., interactive sessions)
+            return None
+
+        # Return the directory part of the filename as a Path object
+        return Path(os.path.dirname(os.path.abspath(filename))) # Return the directory
+
+    except AttributeError:  # Handle cases where inspect might fail (uncommon)
+        return None
 
 class Elicit:
     """
@@ -237,15 +281,28 @@ class Elicit:
         - Logs in to the ElicitApi and creates a client object for further API interactions.
     """
     def __init__(self, configuration):
-        pp.pprint(configuration)
-        # TODO: should warn if any of these other credential parameters are None
-        if configuration.username is not None:
-            self.creds = api.ElicitCreds(configuration.username, configuration.password, configuration.client_id, configuration.client_secret)
+        # load configuration from file.
+        if configuration.env_file is not None:
+            configuration_from_file = load_yaml_from_env_file(configuration.env_file)
         else:
-            cred_env_config = load_yaml_from_env(configuration.env)
-            self.creds = api.ElicitCreds.from_env(cred_env_config)
+            configuration_from_file = load_yaml_from_env(configuration.env)
 
-        self.script_args = configuration
+        # Merge configuration and configuration_from_file into effective_configuration
+        effective_configuration = {**(configuration_from_file or {}), **vars(configuration)}
+
+        pp.pprint(effective_configuration)
+
+        self.creds = api.ElicitCreds(
+            effective_configuration['username'],
+            effective_configuration['password'],
+            effective_configuration['client_id'],
+            effective_configuration['client_secret']
+        )
+
+        if self.creds is None:
+            raise Exception("Credentials not found")
+
+        self.script_args = effective_configuration
         self.elicit_api = api.ElicitApi(self.creds, self.script_args.apiurl, self.script_args.send_opt)
         self.client = self.elicit_api.login()
 

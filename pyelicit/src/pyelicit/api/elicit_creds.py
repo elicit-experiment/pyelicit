@@ -29,5 +29,9 @@ class ElicitCreds:
 
     @classmethod
     def from_env(cls, config):
-        return cls(config['user'], config['password'], config['client_id'], config['client_secret'])
+        # Return None unless all required fields are specified
+        required_fields = ['user', 'password', 'client_id', 'client_secret']
+        if not all(field in config and config[field] for field in required_fields):
+            return None
 
+        return cls(config['user'], config['password'], config['client_id'], config['client_secret'])

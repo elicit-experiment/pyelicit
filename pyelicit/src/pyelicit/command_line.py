@@ -16,7 +16,9 @@ ENVIRONMENTS = {
 parser = argparse.ArgumentParser(prog='elicit')
 parser.add_argument('--env', choices=ENVIRONMENTS.keys(), default='prod',
                     help='Service environment to communicate with')
-parser.add_argument('--apiurl', type=str, default=None)
+parser.add_argument('--env_file',
+                    help='Environment file to load')
+parser.add_argument('--api_url', type=str, default=None)
 parser.add_argument('--ignore_https', action='store_true', default=False)
 parser.add_argument('--debug', action='store_true', default=False)
 
