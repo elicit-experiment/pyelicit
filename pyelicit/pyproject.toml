@@ -21,16 +21,15 @@ dependencies = [
     "requests-toolbelt>=1.0.0",
     "sets>=0.3.2",
     "pathlib>=1.0.1",
-    "pyyaml>=6.0.2",
-    "pytest>=8.0.0"
+    "pyyaml>=6.0.2"
 ]
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-python_files = ["test_*.py"]
-addopts = "-v -ra --strict-markers"
 
 [project.optional-dependencies]
 test = [
     "pytest>=8.0.0"
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["pyelicit/tests"]
+python_files = ["test_*.py"]
+addopts = "-v -ra --strict-markers"
