@@ -1,6 +1,7 @@
 from pyswagger import App, Security
 from pyswagger.contrib.client.requests import Client
 import ssl
+import tempfile
 from . import elicit_creds
 from contextlib import contextmanager
 import urllib.error
@@ -54,12 +55,13 @@ class ElicitApi:
             # Load self.swagger_url json file to local filesystem
             print(f"Downloading swagger definition from {self.swagger_url}")
             response = requests.get(self.swagger_url)
-            swagger_json_local_path = os.path.abspath('swagger.json')
-            with open(swagger_json_local_path, 'wb') as file:
-                file.write(response.content)
-                print(f"Saved swagger.json to {swagger_json_local_path}")
+            
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".json") as temp_file:
+                temp_file.write(response.content)
+                swagger_json_local_path = temp_file.name
+                print(f"Saved swagger.json to temporary file {swagger_json_local_path}")
 
-            # Creating an url string pointing to the local file swagger.json
+            # Creating a URL string pointing to the temporary file
             swagger_json_url = Path(swagger_json_local_path).as_uri()
 
             print(f"Connecting to Elicit API Swagger definition #{swagger_json_url} downloaded from {self.swagger_url}")
