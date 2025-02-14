@@ -14,20 +14,34 @@ ENVIRONMENTS = {
     'prod': "https://elicit-experiment.com",
     'prod_ip': "https://%s"%(str(prod_ip_address))
 }
-parser = argparse.ArgumentParser(prog='elicit')
-parser.add_argument('--env', choices=ENVIRONMENTS.keys(), default='prod',
-                    help='Service environment to communicate with')
-parser.add_argument('--env_file',
-                    help='Environment file to load')
-parser.add_argument('--api_url', type=str, default=None)
-parser.add_argument('--ignore_https', action='store_true', default=False)
-parser.add_argument('--debug', action='store_true', default=False)
+parser = None
 
-parser.add_argument('--role', type=str, default='admin')
-parser.add_argument('--user', type=str, default=None)
-parser.add_argument('--password', type=str, default=None)
-parser.add_argument('--client_id', type=str, default=None)
-parser.add_argument('--client_secret', type=str, default=None)
+def init_parser():
+    """
+    Initializes or reinitializes and configures the argument parser for the application.
+
+    :return: Configured argparse.ArgumentParser instance.
+    :rtype: argparse.ArgumentParser
+    """
+    global parser
+    parser = argparse.ArgumentParser(prog='elicit')
+    parser.add_argument('--env', choices=ENVIRONMENTS.keys(), default='prod',
+                        help='Service environment to communicate with')
+    parser.add_argument('--env_file',
+                        help='Environment file to load')
+    parser.add_argument('--api_url', type=str, default=None)
+    parser.add_argument('--ignore_https', action='store_true', default=False)
+    parser.add_argument('--debug', action='store_true', default=False)
+
+    parser.add_argument('--role', type=str, default='admin')
+    parser.add_argument('--user', type=str, default=None)
+    parser.add_argument('--password', type=str, default=None)
+    parser.add_argument('--client_id', type=str, default=None)
+    parser.add_argument('--client_secret', type=str, default=None)
+
+    return parser
+
+init_parser()
 
 def get_parser():
     return parser
