@@ -1,5 +1,6 @@
 import argparse
 import socket
+import types
 
 # grab the address using socket.getaddrinfo
 answers = socket.getaddrinfo('elicit-experiment.com', 443)
@@ -34,7 +35,7 @@ def get_parser():
 def parse_command_line_args(custom_defaults=None):
     args = parser.parse_args()
 
-    return add_command_line_args_default(args, custom_defaults)
+    return types.SimpleNamespace(**add_command_line_args_default(args, custom_defaults))
 
 def add_command_line_args_default(initial_args, custom_defaults=None):
     if custom_defaults is None:
