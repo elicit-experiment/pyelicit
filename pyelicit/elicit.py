@@ -296,14 +296,14 @@ class Elicit:
         elif configuration['env'] is not None:
             configuration_from_file = load_yaml_from_env(configuration['env'])
 
-        if base_configuration['debug']:
+        if configuration['debug']:
             pp.pprint(configuration_from_file)
             pp.pprint(configuration)
 
         # Merge configuration and configuration_from_file into effective_configuration
         effective_configuration = (configuration_from_file or {}) | {k: v for k, v in configuration.items() if v is not None}
 
-        if base_configuration['debug']:
+        if configuration['debug']:
             pp.pprint(effective_configuration)
 
         self.creds = api.ElicitCreds.from_env(effective_configuration)

@@ -92,7 +92,6 @@ def test_elicit_constructor_with_env_file():
                 args.append(v)
 
             parsed_args = add_command_line_args_default(get_parser().parse_args(args))
-            pprint(parsed_args)
             elicit = Elicit(parsed_args)
 
         assert elicit.creds.user == 'config_user'
