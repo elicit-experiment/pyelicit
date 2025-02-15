@@ -55,7 +55,7 @@ class ElicitApi:
             # Load self.swagger_url json file to local filesystem
             print(f"Downloading swagger definition from {self.swagger_url}")
             response = requests.get(self.swagger_url)
-            
+
             with tempfile.NamedTemporaryFile(delete=False, suffix=".json") as temp_file:
                 temp_file.write(response.content)
                 swagger_json_local_path = temp_file.name
@@ -78,7 +78,6 @@ class ElicitApi:
 
             if self.app.root.host != self.api_host:
                 print('WARNING: API URL from swagger doesn\'t match this configuration: [%s] vs [%s]'%(self.api_url, self.app.root.host))
-            print(self.app.root.schemes)
 
         except urllib.error.HTTPError as e:
             # If the server returns an HTTP error (like 403 Forbidden), it will be

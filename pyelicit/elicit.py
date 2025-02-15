@@ -43,7 +43,6 @@ def camel_to_snake(name):
 
 # Parse the pagination link headers out of the HTTP response
 def parse_pagination_links(link_header):
-    pp.pprint(link_header)
     link = link_header[0].split(',')
     link_matches = [re.match(r'\s*<([^>]+)>;\s*rel="([a-z]+)"', x) for x in link]
     links = [dict(href=m.group(1), rel=m.group(2)) for m in link_matches]
@@ -51,13 +50,14 @@ def parse_pagination_links(link_header):
     next_page_link = list(filter(lambda link: link['rel'] == 'next', links))
     return last_page_link, next_page_link
 
-def assert_role(client, elicit, role = 'admin'):
+def assert_role(client, elicit, role = 'admin', debug = False):
     resp = client.request(elicit['getCurrentUser']())
 
     assert resp.status == HTTPStatus.OK
 
-    print("Current User:")
-    pp.pprint(resp.data)
+    if debug:
+        print("Current User:")
+        pp.pprint(resp.data)
 
     user = resp.data
 
@@ -86,23 +86,22 @@ def add_users_to_protocol(client, elicit, new_study, new_protocol_definition, st
     return protocol_users
 
 
-def find_or_create_user(client, elicit, username, password, email=None, role=None):
+def find_or_create_user(client, elicit, username, password, email=None, role=None, debug=False):
     resp = client.request(elicit['findUser'](id=username))
 
     if resp.status == HTTPStatus.NOT_FOUND:
-        pp.pprint(resp.data)
-        pp.pprint(resp.status)
-        print("Not found; Creating user:")
+        if debug:
+            print("Not found; Creating user:")
         user_details = dict(username=username,
                             password=password,
                             email=email or (username + "@elicit.com"),
                             role=role or 'registered_user',
                             password_confirmation=password)
         resp = client.request(elicit['addUser'](user=dict(user=user_details)))
-        return (resp.data)
+        return resp.data
     else:
         print("User already exists.")
-        return (resp.data)
+        return resp.data
 
 
 def add_object(client, elicit, operation, pp = _pp, **args):
@@ -297,13 +296,15 @@ class Elicit:
         elif configuration['env'] is not None:
             configuration_from_file = load_yaml_from_env(configuration['env'])
 
-        pp.pprint(configuration_from_file)
-        pp.pprint(configuration)
+        if base_configuration['debug']:
+            pp.pprint(configuration_from_file)
+            pp.pprint(configuration)
 
         # Merge configuration and configuration_from_file into effective_configuration
         effective_configuration = (configuration_from_file or {}) | {k: v for k, v in configuration.items() if v is not None}
 
-        pp.pprint(effective_configuration)
+        if base_configuration['debug']:
+            pp.pprint(effective_configuration)
 
         self.creds = api.ElicitCreds.from_env(effective_configuration)
 
@@ -332,18 +333,21 @@ class Elicit:
         user = find_or_create_user(self.client, self.elicit_api, username, password, email, role)
         return user
 
-    def ensure_users(self, num_registered, num_anonymous):
+    def ensure_users(self, num_registered, num_anonymous, debug: False):
         page = 0
         next_link = 'first'
         study_participants = []
         while ((num_registered > 0) or (num_anonymous > 0)) and next_link:
             page += 1
-            print("GETTING page %d next %s"%(page, next_link))
+
+            if debug:
+                print("GETTING page %d next %s"%(page, next_link))
             resp = self.client.request(self.elicit_api['findUsers'](page=page, page_size=3))
             assert resp.status == HTTPStatus.OK
             users = resp.data
 
-            print("got %d users"%len(users))
+            if debug:
+                print("got %d users"%len(users))
 
             link_header = resp.header['Link']
 
@@ -351,7 +355,8 @@ class Elicit:
 
             if len(last_page_link) == 1:
                 last_page = re.search(r'.*page=(\d+).*', last_page_link[0]['href']).group(1)
-                print("last_page %s"%last_page)
+                if debug:
+                    print("last_page %s"%last_page)
 
             if len(next_page_link) == 1:
                 next_link = next_page_link[0]['href']
@@ -367,9 +372,10 @@ class Elicit:
                     if (num_anonymous > 0) and not "mturk" in user.email:
                         study_participants += [user]
                         num_anonymous -= 1
-            print("Got existing %d users.  %d registered and %d anonymous users remain."%(len(study_participants), num_registered, num_anonymous))
+            if debug:
+                print("Got existing %d users.  %d registered and %d anonymous users remain."%(len(study_participants), num_registered, num_anonymous))
 
-        if (num_registered > 0) or (num_anonymous > 0):
+        if (num_registered > 0) or (num_anonymous > 0) and debug:
             print('Creating remaining users')
 
         for i in range(num_anonymous):
