@@ -63,4 +63,4 @@ def add_command_line_args_default(initial_args, custom_defaults=None):
 
     initial_args.send_opt = dict(verify=(not initial_args.ignore_https))
 
-    return vars(initial_args) | custom_defaults
+    return vars(initial_args) | {k: v for k, v in custom_defaults.items() if v is not None}
