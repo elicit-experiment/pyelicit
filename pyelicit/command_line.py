@@ -122,6 +122,11 @@ def add_command_line_args_default(initial_args, custom_defaults={}):
     if not isinstance(initial_args, dict):
         configuration = vars(initial_args)
 
+    # Update configuration with custom_defaults where applicable
+    for key in configuration.keys():
+        if key in custom_defaults and configuration[key] is None and custom_defaults[key] is not None:
+            configuration[key] = custom_defaults[key]
+
     # load configuration from file.
     configuration_from_file = None
     if configuration['env_file'] is not None:
@@ -137,11 +142,6 @@ def add_command_line_args_default(initial_args, custom_defaults={}):
 
     # Merge configuration and configuration_from_file into effective_configuration
     effective_configuration = configuration | (configuration_from_file or {})
-
-    # Update configuration with custom_defaults where applicable
-    for key in effective_configuration.keys():
-        if key in custom_defaults and effective_configuration[key] is None and custom_defaults[key] is not None:
-            effective_configuration[key] = custom_defaults[key]
 
     if configuration['debug']:
         print("Effective configuration:")
