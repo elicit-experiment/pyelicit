@@ -113,7 +113,7 @@ def parse_command_line_args(custom_defaults=None):
     if custom_defaults is None:
         custom_defaults = {}
 
-    args = parser.parse_args(custom_defaults)
+    args = parser.parse_args()
 
     return types.SimpleNamespace(**add_command_line_args_default(args, custom_defaults))
 
