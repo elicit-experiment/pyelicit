@@ -1,10 +1,10 @@
 import pytest
 
-from pyelicit.elicit import Elicit, config_search_paths
+from pyelicit.elicit import Elicit
 from unittest.mock import MagicMock, patch
 from types import SimpleNamespace
 from pprint import pprint
-from pyelicit.command_line import add_command_line_args_default, get_parser
+from pyelicit.command_line import add_command_line_args_default, get_parser, config_search_paths
 import os
 from pathlib import Path
 
@@ -55,7 +55,7 @@ def test_elicit_constructor_missing_credentials():
         debug=False
     )
     
-    with patch('pyelicit.elicit.load_yaml_from_env') as mock_load:
+    with patch('pyelicit.command_line.load_yaml_from_env') as mock_load:
         mock_load.return_value = None
         
         with pytest.raises(Exception, match="Credentials not found"):
@@ -78,7 +78,7 @@ def test_elicit_constructor_with_env_file():
         'client_secret': 'file_secret'
     }
     
-    with patch('pyelicit.elicit.load_yaml_from_env_file') as mock_load:
+    with patch('pyelicit.command_line.load_yaml_from_env_file') as mock_load:
         mock_load.return_value = mock_file_config
         
         with patch('pyelicit.elicit.api.ElicitApi') as mock_api:
@@ -122,7 +122,7 @@ def test_add_custom_command_line_defaults():
         'client_secret': 'file_secret'
     }
 
-    with patch('pyelicit.elicit.load_yaml_from_env_file') as mock_load:
+    with patch('pyelicit.command_line.load_yaml_from_env_file') as mock_load:
         mock_load.return_value = mock_file_config
 
         with patch('pyelicit.elicit.api.ElicitApi') as mock_api:
@@ -142,4 +142,43 @@ def test_add_custom_command_line_defaults():
         assert elicit.creds.user == 'config_user'
         assert elicit.creds.password == 'file_pass'
         assert elicit.creds.public_client_id == 'custom_client_id'
+        assert elicit.creds.public_client_secret == 'file_secret'
+
+
+
+def test_override_env():
+    """Test that the environment can be overridden. This was not the previous behavior"""
+    config = {
+        'env': 'local',
+    }
+
+    mock_file_config = {
+        'user': 'file_user',
+        'password': 'file_pass',
+        'client_id': 'file_client',
+        'client_secret': 'file_secret'
+    }
+
+    with patch('pyelicit.command_line.load_yaml_from_env') as mock_load:
+        mock_load.return_value = mock_file_config
+
+        with patch('pyelicit.elicit.api.ElicitApi') as mock_api:
+            mock_api_instance = MagicMock()
+            mock_api_instance.login.return_value = MagicMock()
+            mock_api.return_value = mock_api_instance
+
+            args = []
+            for k, v in config.items():
+                args.append(f'--{k}')
+                args.append(v)
+
+            parsed_args = add_command_line_args_default(get_parser().parse_args(args))
+            pprint(parsed_args)
+            elicit = Elicit(parsed_args)
+
+        mock_load.assert_called_with('local')
+
+        assert elicit.creds.user == 'file_user'
+        assert elicit.creds.password == 'file_pass'
+        assert elicit.creds.public_client_id == 'file_client'
         assert elicit.creds.public_client_secret == 'file_secret'
