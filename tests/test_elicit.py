@@ -63,7 +63,7 @@ def test_elicit_constructor_missing_credentials():
 
 def test_elicit_constructor_with_env_file():
     """Test Elicit constructor loading configuration from environment file"""
-    config = {
+    command_line_args = {
         'env_file': 'test_env.yaml',
         'env': 'prod',
         'api_url': 'https://test.com',
@@ -87,16 +87,17 @@ def test_elicit_constructor_with_env_file():
             mock_api.return_value = mock_api_instance
 
             args = []
-            for k, v in config.items():
+            for k, v in command_line_args.items():
                 args.append(f'--{k}')
                 args.append(v)
 
             parsed_args = add_command_line_args_default(get_parser().parse_args(args))
             elicit = Elicit(parsed_args)
 
-        assert elicit.creds.user == 'config_user'
+        # File should override.
+        assert elicit.creds.user == 'file_user'
         assert elicit.creds.password == 'file_pass'
-        assert elicit.creds.public_client_id == 'config_client'
+        assert elicit.creds.public_client_id == 'file_client'
         assert elicit.creds.public_client_secret == 'file_secret'
 
 def test_config_search_paths():
@@ -107,19 +108,17 @@ def test_config_search_paths():
     assert search_paths[2] == str(Path.home() / ".config/elicit")
 
 def test_add_custom_command_line_defaults():
-    config = {
+    command_line_args = {
         'env_file': 'test_env.yaml',
         'env': 'prod',
         'api_url': 'https://test.com',
         'user': 'config_user',
-        'client_id': 'config_client',
+        'client_secret': 'config_secret',
     }
 
     mock_file_config = {
         'user': 'file_user',
         'password': 'file_pass',
-        'client_id': 'file_client',
-        'client_secret': 'file_secret'
     }
 
     with patch('pyelicit.command_line.load_yaml_from_env_file') as mock_load:
@@ -131,24 +130,28 @@ def test_add_custom_command_line_defaults():
             mock_api.return_value = mock_api_instance
 
             args = []
-            for k, v in config.items():
+            for k, v in command_line_args.items():
                 args.append(f'--{k}')
                 args.append(v)
+            args.append('--debug')
 
-            parsed_args = add_command_line_args_default(get_parser().parse_args(args), {'client_id': 'custom_client_id'})
+            parsed_args = add_command_line_args_default(get_parser().parse_args(args), {'user': 'custom_user', 'client_id': 'custom_client_id', 'client_secret': 'custom_secret'})
             pprint(parsed_args)
             elicit = Elicit(parsed_args)
 
-        assert elicit.creds.user == 'config_user'
+        # File overrides custom defaults
+        assert elicit.creds.user == 'file_user'
         assert elicit.creds.password == 'file_pass'
+        # custom default overrides if command line is not specified
         assert elicit.creds.public_client_id == 'custom_client_id'
-        assert elicit.creds.public_client_secret == 'file_secret'
+        # if command line is specified (but not file), it wins
+        assert elicit.creds.public_client_secret == 'config_secret'
 
 
 
 def test_override_env():
     """Test that the environment can be overridden. This was not the previous behavior"""
-    config = {
+    command_line_args = {
         'env': 'local',
     }
 
@@ -168,7 +171,7 @@ def test_override_env():
             mock_api.return_value = mock_api_instance
 
             args = []
-            for k, v in config.items():
+            for k, v in command_line_args.items():
                 args.append(f'--{k}')
                 args.append(v)
 

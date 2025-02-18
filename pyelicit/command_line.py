@@ -129,16 +129,21 @@ def add_command_line_args_default(initial_args, custom_defaults={}):
     elif configuration['env'] is not None:
         configuration_from_file = load_yaml_from_env(configuration['env'])
 
-    if True or configuration['debug']:
+    if configuration['debug']:
         print("Configuration from file:")
         pp.pprint(configuration_from_file)
         print("Configuration from command line + defaults:")
         pp.pprint(configuration)
 
     # Merge configuration and configuration_from_file into effective_configuration
-    effective_configuration = (configuration_from_file or {}) | {k: v for k, v in configuration.items() if v is not None}
+    effective_configuration = configuration | (configuration_from_file or {})
 
-    if True or configuration['debug']:
+    # Update configuration with custom_defaults where applicable
+    for key in effective_configuration.keys():
+        if key in custom_defaults and effective_configuration[key] is None and custom_defaults[key] is not None:
+            effective_configuration[key] = custom_defaults[key]
+
+    if configuration['debug']:
         print("Effective configuration:")
         pp.pprint(effective_configuration)
 
@@ -153,7 +158,7 @@ def add_command_line_args_default(initial_args, custom_defaults={}):
 
     effective_configuration['send_opt'] = dict(verify=(not effective_configuration.get('ignore_https')))
 
-    # add extra default arguments, if any, that have been added to the parser
-    return effective_configuration | {k: v for k, v in custom_defaults.items() if v is not None}
+    
+    return effective_configuration
 
 init_parser()

@@ -42,7 +42,7 @@ This building process combines three sources of data:
     - If `--env_file` is provided, the script attempts to load a specific `.yaml` file via `load_yaml_from_env_file()`.
     - If `--env` is specified (e.g., `local`, `prod`), the script infers the YAML file name (`<env>.yaml`)
 
-Each data source is merged in a hierarchical manner, where data from sources specified by the user (command-line arguments) takes precedence over defaults or file-based configurations.
+Each data source is merged in a hierarchical manner, where data from sources specified by the user (command-line arguments) takes precedence over defaults, and file-based configurations takes precedence over both default and command-line arguments.
 
 In the case of `--env` above, the package looks for the environment file in the following paths:
 
